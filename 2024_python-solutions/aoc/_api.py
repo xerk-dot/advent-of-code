@@ -5,7 +5,7 @@ from datetime import datetime
 
 _SESSION_FILE_NAME = "session.txt"
 _YEAR_FILE_NAME = "year.txt"
-
+_DAY_FILE_NAME = "day.txt"
 
 def _set_read_file(filename: str, default: str = None) -> Union[str, None]:
     try:
@@ -35,7 +35,13 @@ if not YEAR:
     assert YEAR is not None
 YEAR = int(YEAR.strip())
 
-def get_input(day: int, year: int = YEAR, overwrite: bool = False):
+DAY = _set_read_file(_DAY_FILE_NAME)
+if not DAY:
+    DAY = _set_read_file(_DAY_FILE_NAME, str(datetime.now().day))
+    assert DAY is not None
+DAY = int(DAY.strip())
+
+def get_input(day: int = DAY, year: int = YEAR, overwrite: bool = False):
     """
     Usage:
     ```python
