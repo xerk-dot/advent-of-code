@@ -74,8 +74,5 @@ def calculate_tokens(machines, part2=False):
 
 input_text = get_input(13)
 machines = parse_input(input_text)
-result = calculate_tokens(machines, False)
-print("Part 1:", result)
-
-result = calculate_tokens(machines, True)
-print("Part 2:", result)
+print("Part 1:", calculate_tokens(machines, False))
+print("Part 2:", calculate_tokens(machines, True))
