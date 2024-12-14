@@ -1,60 +1,41 @@
 from aoc import get_input
+from collections import defaultdict
 
-def calculate_cost(input):
-    regions = {}
-    visited = set()
-    
-    def flood_fill(i, j):
-        if (i < 0 or i >= len(input) or 
-            j < 0 or j >= len(input[0]) or
-            (i,j) in visited or
-            input[i][j] != letter):
-            return 0, 0, set()
-            
-        visited.add((i,j))
-        size = 1
-        perimeter1 = 0
-        perimeter2 = 0
-        
-        # Count individual edge cells for perimeter1 and continuous edges
-        for ni, nj in [(i+1,j), (i-1,j), (i,j+1), (i,j-1)]:
-            if (ni < 0 or ni >= len(input) or 
-                nj < 0 or nj >= len(input[0]) or
-                input[ni][nj] != letter):
-                perimeter1 += 1
+input_lines = get_input(12).splitlines()
+data = {
+    y + x * 1j: c 
+    for x, row in enumerate(input_lines)
+    for y, c in enumerate(row.strip())
+}
 
-        # Recursively check adjacent cells
-        for ni, nj in [(i+1,j), (i-1,j), (i,j+1), (i,j-1)]:
-            s, p1, e = flood_fill(ni, nj)
-            size += s
-            perimeter1 += p1
-        
-        return size, perimeter1, 0
 
-    # Find all regions
-    for i in range(len(input)):
-        for j in range(len(input[i])):
-            if (i,j) not in visited and input[i][j].isalpha():
-                letter = input[i][j]
-                region_size, perimeter1, perimeter2 = flood_fill(i, j)
-                
-                # Find next available suffix number for duplicate letters
-                suffix = ""
-                base_name = letter
-                while base_name + suffix in regions:
-                    if suffix == "":
-                        suffix = "1"
-                    else:
-                        suffix = str(int(suffix) + 1)
-                regions[base_name + suffix] = [region_size, perimeter1, perimeter2]
-                    
-    print(regions)
-    return regions
-def parse_input(input):
-    return [[char for char in line] for line in input.splitlines()]
+def find(pos, union_find):
+    if pos not in union_find:
+        union_find[pos] = pos
+    if union_find[pos] != pos:
+        union_find[pos] = find(union_find[pos], union_find)
+    return union_find[pos]
 
-input = get_input(12)
-input = parse_input(input)
-regions = calculate_cost(input)
-print("part 1:", sum(size * perimeter1 for size, perimeter1, _ in regions.values()))
-print("part 2:", sum(size * perimeter2 for size, _, perimeter2 in regions.values()))
+
+def union(pos1, pos2, union_find):
+    union_find[find(pos1, union_find)] = find(pos2, union_find)
+
+
+union_find = {}
+for source in data:
+    find(source, union_find)
+    for neighbour in [source + 1, source + 1j, source - 1, source - 1j]:
+        if neighbour in data and data[neighbour] == data[source]:
+            union(source, neighbour, union_find)
+
+components = defaultdict(set)
+for source, component in union_find.items():
+    components[find(source, union_find)].add(source)
+
+areas = [len(component) for component in components.values()]
+perimeters = [{(p, d) for d in [1, -1, 1j, -1j] for p in c if p + d not in c} for c in components.values()]
+
+print(sum(area * len(perimeter) for area, perimeter in zip(areas, perimeters)))
+print(
+    sum(area * len(perimeter - {(p + 1j * d, d) for p, d in perimeter}) for area, perimeter in zip(areas, perimeters))
+)
